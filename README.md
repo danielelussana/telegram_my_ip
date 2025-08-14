@@ -17,7 +17,7 @@ Useful for machines that connect via DHCP if you want to know their IP address w
 ## File / Files
 
 - `telegram_my_ip_v1.sh` - Prima versione / First version
-- `telegram_my_ip_v2.sh` - Versione migliorata / Improved version
+- `telegram_my_ip.sh` - Versione migliorata / Improved version
 
 ## Differenze tra le versioni / Version differences
 
