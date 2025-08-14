@@ -197,7 +197,7 @@ sudo journalctl -u telegram_my_ip.service
 
 ## Licenza / License
 
-Questo progetto è rilasciato sotto licenza libera. / This project is released under free license.
+Questo progetto è rilasciato sotto licenza GNU AFFERO GENERAL PUBLIC LICENSE, V3. / This project is released under GNU AFFERO GENERAL PUBLIC LICENSE V3 license.
 
 ---
 
