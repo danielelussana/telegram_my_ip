@@ -92,8 +92,8 @@ telegram_chat="YOUR_CHAT_ID_HERE"
 
 ### Metodo 1: Esecuzione manuale / Manual execution
 ```bash
-chmod +x telegram_my_ip_v2.sh
-./telegram_my_ip_v2.sh
+chmod +x telegram_my_ip.sh
+./telegram_my_ip.sh
 ```
 
 ### Metodo 2: Esecuzione automatica all'avvio (systemd) / Automatic execution at startup (systemd)
@@ -105,7 +105,7 @@ chmod +x telegram_my_ip_v2.sh
 1. **Copia lo script / Copy the script:**
    ```bash
    sudo mkdir -p /opt/scripts
-   sudo cp telegram_my_ip_v2.sh /opt/scripts/telegram_my_ip.sh
+   sudo cp telegram_my_ip.sh /opt/scripts/telegram_my_ip.sh
    sudo chmod +x /opt/scripts/telegram_my_ip.sh
    ```
 
@@ -204,3 +204,14 @@ Questo progetto è rilasciato sotto licenza GNU AFFERO GENERAL PUBLIC LICENSE, V
 ## Contributi / Contributing
 
 Pull request e segnalazioni sono benvenute! / Pull requests and issues are welcome!
+
+
+## Risoluzione problema avvio / Boot timing fix
+
+Se al boot ricevi spesso il messaggio che non è stato possibile determinare l'IPv4, di solito la rete non è ancora pronta quando parte lo script.
+
+La versione aggiornata:
+- prova più metodi per trovare l'IPv4 (`ip route`, `ip addr`, fallback `hostname -I`)
+- fa retry per ~90 secondi (18 tentativi x 5 secondi) prima di dichiarare errore
+
+Questo riduce i falsi negativi nei boot lenti o con DHCP in ritardo.

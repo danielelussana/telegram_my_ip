@@ -1,4 +1,6 @@
 #!/bin/bash
+set -u
+
 #DLx
 #[Unit]
 #Wants=network-online.target
@@ -12,33 +14,55 @@
 #[Install]
 #WantedBy=multi-user.target
 
-#then:
-#sudo chmod 644 /etc/systemd/system/telegram_my_ip.service
-#sudo systemctl enable telegram_my_ip.service
-#Alternative method to run at boot hero:
-#https://www.dexterindustries.com/howto/auto-run-python-programs-on-the-raspberry-pi/
-
 #VARIABLES
 telegram_bot_api="YOUR_BOT_TOKEN_HERE"
 telegram_chat="YOUR_CHAT_ID_HERE"
 
-# Metodo 1: Filtra solo IPv4 da hostname -I
-myip=$(hostname -I | grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' | head -1)
+# Retry settings (seconds)
+max_attempts=18
+sleep_between_attempts=5
 
-# Metodo 2 (alternativo): Usa ip route per ottenere l'IP della route di default
-# myip=$(ip route get 8.8.8.8 | grep -oP 'src \K\S+')
+get_ipv4() {
+    local ip
 
-# Metodo 3 (alternativo): Specifica un'interfaccia particolare (es. eth0 o wlan0)
-# myip=$(ip addr show eth0 | grep -oP 'inet \K[\d.]+')
-# myip=$(ip addr show wlan0 | grep -oP 'inet \K[\d.]+')
+    # Metodo preferito: IP usato per la route di default
+    ip=$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')
+    if [[ -n "${ip}" ]]; then
+        echo "${ip}"
+        return 0
+    fi
 
-# Verifica che abbiamo ottenuto un IP valido
-if [[ -z "$myip" ]]; then
-    message="$(hostname) è avviato ma non è stato possibile determinare l'indirizzo IPv4"
+    # Fallback: primo IPv4 non-loopback su interfacce UP
+    ip=$(ip -o -4 addr show up scope global 2>/dev/null | awk '{split($4,a,"/"); print a[1]; exit}')
+    if [[ -n "${ip}" ]]; then
+        echo "${ip}"
+        return 0
+    fi
+
+    # Ultimo fallback: parsing di hostname -I
+    ip=$(hostname -I 2>/dev/null | grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' | head -1)
+    if [[ -n "${ip}" ]]; then
+        echo "${ip}"
+        return 0
+    fi
+
+    return 1
+}
+
+myip=""
+for ((attempt=1; attempt<=max_attempts; attempt++)); do
+    if myip=$(get_ipv4); then
+        break
+    fi
+    sleep "${sleep_between_attempts}"
+done
+
+if [[ -z "${myip}" ]]; then
+    message="$(hostname) è avviato ma non è stato possibile determinare l'indirizzo IPv4 dopo $((max_attempts * sleep_between_attempts)) secondi"
 else
-    message="$(hostname) is running with IP address: $myip"
+    message="$(hostname) è avviato con indirizzo IP: ${myip}"
 fi
 
 curl -s -X POST "https://api.telegram.org/bot${telegram_bot_api}/sendMessage" \
      -d "chat_id=${telegram_chat}" \
-     -d "text=${message}"
+     -d "text=${message}" >/dev/null
