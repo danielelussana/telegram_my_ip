@@ -18,9 +18,22 @@
 #Alternative method to run at boot hero:
 #https://www.dexterindustries.com/howto/auto-run-python-programs-on-the-raspberry-pi/
 
-#VARIABLES
-telegram_bot_api="YOUR_BOT_TOKEN_HERE"
-telegram_chat="YOUR_CHAT_ID_HERE"
+# Load variables from config file in the same directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_FILE="${SCRIPT_DIR}/telegram_my_ip.conf"
+
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    echo "Config file not found: $CONFIG_FILE" >&2
+    exit 1
+fi
+
+# shellcheck source=telegram_my_ip.conf
+source "$CONFIG_FILE"
+
+if [[ -z "$telegram_bot_api" || -z "$telegram_chat" ]]; then
+    echo "Missing required variables in $CONFIG_FILE" >&2
+    exit 1
+fi
 
 # Metodo 1: Filtra solo IPv4 da hostname -I
 myip=$(hostname -I | grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' | head -1)
