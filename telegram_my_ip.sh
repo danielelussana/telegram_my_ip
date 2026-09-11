@@ -1,44 +1,85 @@
 #!/bin/bash
-#DLx
-#[Unit]
-#Wants=network-online.target
-#After=network-online.target
-#
-#[Service]
-#Type=oneshot
-#RemainAfterExit=yes
-#ExecStart=/opt/scripts/telegram_my_ip.sh
-#
-#[Install]
-#WantedBy=multi-user.target
 
-#then:
-#sudo chmod 644 /etc/systemd/system/telegram_my_ip.service
-#sudo systemctl enable telegram_my_ip.service
-#Alternative method to run at boot hero:
-#https://www.dexterindustries.com/howto/auto-run-python-programs-on-the-raspberry-pi/
+set -euo pipefail
 
-#VARIABLES
-telegram_bot_api="YOUR_BOT_TOKEN_HERE"
-telegram_chat="YOUR_CHAT_ID_HERE"
+# directory dove sono conservati i token
+CONFIG_PATH="/etc/telegram-tokens"
 
-# Metodo 1: Filtra solo IPv4 da hostname -I
-myip=$(hostname -I | grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' | head -1)
+# file di configurazione
+CONFIG_FILE="${CONFIG_PATH}/config"
 
-# Metodo 2 (alternativo): Usa ip route per ottenere l'IP della route di default
-# myip=$(ip route get 8.8.8.8 | grep -oP 'src \K\S+')
+die() {
+    echo "Errore: $*" >&2
+    exit 1
+}
 
-# Metodo 3 (alternativo): Specifica un'interfaccia particolare (es. eth0 o wlan0)
-# myip=$(ip addr show eth0 | grep -oP 'inet \K[\d.]+')
-# myip=$(ip addr show wlan0 | grep -oP 'inet \K[\d.]+')
+check_secure_dir() {
+    local dir="$1"
+    local mode
 
-# Verifica che abbiamo ottenuto un IP valido
+    [[ -d "$dir" ]] || die "directory non trovata: $dir"
+    [[ ! -L "$dir" ]] || die "la directory non deve essere un symlink: $dir"
+
+    mode=$(stat -c '%a' "$dir") || die "impossibile leggere i permessi di $dir"
+
+    case "$mode" in
+        700|500) ;;
+        *) die "permessi non sicuri su $dir: $mode (richiesti 700 o 500)" ;;
+    esac
+}
+
+check_secure_file() {
+    local file="$1"
+    local mode
+
+    [[ -f "$file" ]] || die "file di configurazione non trovato: $file"
+    [[ ! -L "$file" ]] || die "il file non deve essere un symlink"
+
+    mode=$(stat -c '%a' "$file") || die "impossibile leggere i permessi"
+
+    case "$mode" in
+        600|400) ;;
+        *) die "permessi non sicuri su $file: $mode (richiesti 600 o 400)" ;;
+    esac
+}
+
+read_config_value() {
+    local key="$1"
+    local file="$2"
+
+    awk -F= -v search_key="$key" '
+        /^[[:space:]]*#/ { next }
+        /^[[:space:]]*$/ { next }
+        $1 == search_key {
+            sub(/^[^=]+= */, "", $0)
+            print
+            found=1
+            exit
+        }
+        END {
+            if (!found) exit 1
+        }
+    ' "$file"
+}
+
+check_secure_dir "$CONFIG_PATH"
+check_secure_file "$CONFIG_FILE"
+
+telegram_bot_api="$(read_config_value "telegram_bot_api" "$CONFIG_FILE")" \
+    || die "telegram_bot_api mancante"
+
+telegram_chat="$(read_config_value "telegram_chat" "$CONFIG_FILE")" \
+    || die "telegram_chat mancante"
+
+myip=$(hostname -I | grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' | head -1 || true)
+
 if [[ -z "$myip" ]]; then
     message="$(hostname) è avviato ma non è stato possibile determinare l'indirizzo IPv4"
 else
     message="$(hostname) is running with IP address: $myip"
 fi
 
-curl -s -X POST "https://api.telegram.org/bot${telegram_bot_api}/sendMessage" \
+curl --silent --show-error --fail \
+     -X POST "https://api.telegram.org/bot${telegram_bot_api}/sendMessage" \
      -d "chat_id=${telegram_chat}" \
      -d "text=${message}"
