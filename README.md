@@ -96,6 +96,14 @@ chmod +x telegram_my_ip_v2.sh
 ./telegram_my_ip_v2.sh
 ```
 
+### Modalità notifly / notifly mode
+Con `--notifly [CANALE]` lo script invia tramite [notifly](/opt/scripts/notifly) (credenziali in `bot_credentials.txt`) invece di usare `telegram_my_ip.conf`. Senza opzioni usa il bot nativo con il file `.conf` (vedi `telegram_my_ip.conf.example`).
+With `--notifly [CHANNEL]` the script sends through notifly instead of using `telegram_my_ip.conf`.
+```bash
+./telegram_my_ip.sh --notifly telegram
+```
+Lo script risolve i link simbolici, quindi `telegram_my_ip.conf` viene cercato nella cartella reale dello script / symlinks are resolved, so the `.conf` is looked up in the script's real directory.
+
 ### Metodo 2: Esecuzione automatica all'avvio (systemd) / Automatic execution at startup (systemd)
 
 **Raccomandato per sistemi moderni / Recommended for modern systems**
@@ -105,8 +113,8 @@ chmod +x telegram_my_ip_v2.sh
 1. **Copia lo script / Copy the script:**
    ```bash
    sudo mkdir -p /opt/scripts
-   sudo cp telegram_my_ip_v2.sh /opt/scripts/telegram_my_ip.sh
-   sudo chmod +x /opt/scripts/telegram_my_ip.sh
+   sudo ln -s "$PWD/telegram_my_ip.sh" /usr/local/bin/telegram_my_ip
+   sudo chmod +x telegram_my_ip.sh
    ```
 
 2. **Crea il file di servizio / Create service file** `/etc/systemd/system/telegram_my_ip.service`:
@@ -116,9 +124,10 @@ chmod +x telegram_my_ip_v2.sh
    After=network-online.target
 
    [Service]
-   Type=oneshot
-   RemainAfterExit=yes
-   ExecStart=/opt/scripts/telegram_my_ip.sh
+   Type=simple
+   ExecStart=/usr/local/bin/telegram_my_ip --notifly telegram
+   Restart=on-failure
+   RestartSec=5
 
    [Install]
    WantedBy=multi-user.target
