@@ -11,6 +11,10 @@ CONFIG_FILE="${SCRIPT_DIR}/telegram_my_ip.conf"
 NOTIFLY_MODE=false
 NOTIFLY_METHOD=""
 
+# Titolo (tipo di notifica): prima riga del messaggio, come negli altri
+# watcher (ThermalWatcher, PowerWatcher).
+NOTIFY_TITLE="TelegramMyIP"
+
 usage() {
     cat <<EOF
 Uso: $(basename "$0") [--notifly [CANALE]]
@@ -74,16 +78,26 @@ done
 
 myip=$(hostname -I | grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' | head -1 || true)
 
+# Formato comune ai watcher: <simbolo> <b>evento</b>, dettagli, e in fondo
+# "from: <host> (<ip locale>)" (aggiunto da notifly -o o, in modalita'
+# nativa, da origin_tag).
 if [[ -z "$myip" ]]; then
-    message="$(hostname) è avviato ma non è stato possibile determinare l'indirizzo IPv4"
+    message=$'⚠️ <b>Avviato</b>\nIPv4 non determinato'
 else
-    message="$(hostname) is running with IP address: $myip"
+    message=$'🟢 <b>Avviato</b>\n'"IP: ${myip}"
 fi
+
+# Stessa riga di notifly -o: IPv4 usato per il traffico in uscita.
+origin_tag() {
+    local ip
+    ip=$(ip -4 route get 8.8.8.8 2>/dev/null | grep -oP 'src \K[0-9.]+' | head -1 || true)
+    printf 'from: %s (%s)\n' "$(hostname)" "${ip:-127.0.0.1}"
+}
 
 if [[ "$NOTIFLY_MODE" == true ]]; then
     notifly_bin="$(find_notifly)" || die "notifly non trovato (richiesto per --notifly)"
 
-    notifly_args=("$notifly_bin" -o)
+    notifly_args=("$notifly_bin" -o -t "$NOTIFY_TITLE")
     if [[ -n "$NOTIFLY_METHOD" ]]; then
         notifly_args+=(-m "$NOTIFLY_METHOD")
     fi
@@ -102,6 +116,7 @@ else
 
     curl --silent --show-error --fail \
          -X POST "https://api.telegram.org/bot${telegram_bot_api}/sendMessage" \
-         -d "chat_id=${telegram_chat}" \
-         -d "text=${message}"
+         --data-urlencode "chat_id=${telegram_chat}" \
+         --data-urlencode "parse_mode=HTML" \
+         --data-urlencode "text=<b>${NOTIFY_TITLE}</b>"$'\n'"${message}"$'\n'"$(origin_tag)"
 fi
