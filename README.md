@@ -1,11 +1,3 @@
-# Telegram my IP: notificatore di IP via telegram
-
-Script bash per inviare l'indirizzo IP di un Raspberry Pi (o altra macchina Linux) tramite Telegram all'avvio del sistema.
-
-Utile per macchine che si collegano in DHCP e di cui si vuole conoscere l'indirizzo IP senza dover accedere fisicamente alla macchina.
-
----
-
 # Telegram my IP: a Telegram IP Notifier
 
 Bash script to send the IP address of a Raspberry Pi (or other Linux machine) via Telegram on system startup.
@@ -14,69 +6,79 @@ Useful for machines that connect via DHCP if you want to know their IP address w
 
 ---
 
-## File / Files
+---
 
-- `telegram_my_ip_v1.sh` - Prima versione / First version
-- `telegram_my_ip.sh` - Versione migliorata / Improved version
+# Telegram my IP: notificatore di IP via telegram
 
-## Differenze tra le versioni / Version differences
+Script bash per inviare l'indirizzo IP di un Raspberry Pi (o altra macchina Linux) tramite Telegram all'avvio del sistema.
 
-### Versione 1 / Version 1
-```bash
-myip=$(hostname -I | awk '{print $1}')
-```
-**Comportamento**: Restituisce il primo IP nella lista di `hostname -I`
-**Behavior**: Returns the first IP from the `hostname -I` list
-
-### Versione 2 / Version 2
-```bash
-myip=$(hostname -I | grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' | head -1)
-```
-**Comportamento**: Filtra specificamente solo gli indirizzi IPv4 usando una regex
-**Behavior**: Specifically filters only IPv4 addresses using regex
-
-**Miglioramenti della V2 / V2 improvements:**
-- Controllo se l'IP è stato trovato / Check if IP was found
-- Metodi alternativi commentati / Alternative methods commented
-- Messaggio di errore personalizzato / Custom error message
-- Gestione di scenari con solo IPv6 / Handling IPv6-only scenarios
+Utile per macchine che si collegano in DHCP e di cui si vuole conoscere l'indirizzo IP senza dover accedere fisicamente alla macchina.
 
 ---
 
-## Prerequisiti / Prerequisites
+## Files / File
 
-### Sistema / System
+- `telegram_my_ip_v1.sh` - First version / Prima versione
+- `telegram_my_ip.sh` - Improved version / Versione migliorata
+
+## Version differences / Differenze tra le versioni
+
+### Version 1 / Versione 1
+```bash
+myip=$(hostname -I | awk '{print $1}')
+```
+**Behavior**: Returns the first IP from the `hostname -I` list
+**Comportamento**: Restituisce il primo IP nella lista di `hostname -I`
+
+### Version 2 / Versione 2
+```bash
+myip=$(hostname -I | grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' | head -1)
+```
+**Behavior**: Specifically filters only IPv4 addresses using regex
+**Comportamento**: Filtra specificamente solo gli indirizzi IPv4 usando una regex
+
+**Miglioramenti della V2 / V2 improvements:**
+- Check if IP was found / Controllo se l'IP è stato trovato
+- Alternative methods commented / Metodi alternativi commentati
+- Custom error message / Messaggio di errore personalizzato
+- Handling IPv6-only scenarios / Gestione di scenari con solo IPv6
+
+---
+
+## Prerequisites / Prerequisiti
+
+### System / Sistema
 - **Linux** (testato su Raspbian, Debian e Ubuntu / tested on Raspbian, Debian and Ubuntu)
-- **curl** installato / installed
-- **Connessione internet** attiva / Active **internet connection**
-- **Bash** shell disponibile / available
+- **curl** installed / installato
+- Active **internet connection** / **Connessione internet** attiva
+- **Bash** shell available / disponibile
 
-### Bot Telegram / Telegram Bot
-- **Account Telegram** / Telegram account
-- **Bot Token** ottenuto da @BotFather / Bot token from @BotFather
-- **Chat ID** dove ricevere i messaggi / Chat ID to receive messages
+### Telegram Bot / Bot Telegram
+- Telegram account / **Account Telegram**
+- Bot token from @BotFather / **Bot Token** ottenuto da @BotFather
+- Chat ID to receive messages / **Chat ID** dove ricevere i messaggi
 
-### Permessi sistema / System permissions
+### System permissions / Permessi sistema
 - Permessi di **lettura rete** (per `hostname -I`, `ip`) / Network read permissions
 - Accesso **systemd** per installazione automatica (opzionale) / systemd access for automatic installation (optional)
 
 ---
 
-## Configurazione necessaria / Required Configuration
+## Required Configuration / Configurazione necessaria
 
 **IMPORTANTE / IMPORTANT**: Prima di usare lo script devi configurare / Before using the script you must configure:
 
-### 1. Token del Bot Telegram / Telegram Bot Token
+### 1. Telegram Bot Token / Token del Bot Telegram
 Modifica la variabile / Modify the variable:
 ```bash
 telegram_bot_api="YOUR_BOT_TOKEN_HERE"
 ```
 **Come ottenere il token / How to get the token:**
-- Cerca @BotFather su Telegram / Search @BotFather on Telegram
+- Search @BotFather on Telegram / Cerca @BotFather su Telegram
 - Invia `/newbot` e segui le istruzioni / Send `/newbot` and follow instructions
-- Copia il token fornito / Copy the provided token
+- Copy the provided token / Copia il token fornito
 
-### 2. ID della Chat / Chat ID
+### 2. Chat ID / ID della Chat
 Modifica la variabile / Modify the variable:
 ```bash
 telegram_chat="YOUR_CHAT_ID_HERE"
@@ -88,15 +90,15 @@ telegram_chat="YOUR_CHAT_ID_HERE"
 
 ---
 
-## Metodi di esecuzione / Execution Methods
+## Execution Methods / Metodi di esecuzione
 
-### Metodo 1: Esecuzione manuale / Manual execution
+### Method 1: Manual execution / Metodo 1: Esecuzione manuale
 ```bash
 chmod +x telegram_my_ip_v2.sh
 ./telegram_my_ip_v2.sh
 ```
 
-### Modalità notifly / notifly mode
+### notifly mode / Modalità notifly
 Con `--notifly [CANALE]` lo script invia tramite [notifly](/opt/scripts/notifly) (credenziali in `bot_credentials.txt`) invece di usare `telegram_my_ip.conf`. Senza opzioni usa il bot nativo con il file `.conf` (vedi `telegram_my_ip.conf.example`).
 With `--notifly [CHANNEL]` the script sends through notifly instead of using `telegram_my_ip.conf`.
 ```bash
@@ -104,11 +106,11 @@ With `--notifly [CHANNEL]` the script sends through notifly instead of using `te
 ```
 Lo script risolve i link simbolici, quindi `telegram_my_ip.conf` viene cercato nella cartella reale dello script / symlinks are resolved, so the `.conf` is looked up in the script's real directory.
 
-### Metodo 2: Esecuzione automatica all'avvio (systemd) / Automatic execution at startup (systemd)
+### Method 2: Automatic execution at startup (systemd) / Metodo 2: Esecuzione automatica all'avvio (systemd)
 
 **Raccomandato per sistemi moderni / Recommended for modern systems**
 
-#### Installazione / Installation
+#### Installation / Installazione
 
 1. **Copia lo script / Copy the script:**
    ```bash
@@ -140,37 +142,37 @@ Lo script risolve i link simbolici, quindi `telegram_my_ip.conf` viene cercato n
    sudo systemctl start telegram_my_ip.service
    ```
 
-#### Spiegazione configurazione systemd / systemd configuration explanation:
+#### systemd configuration explanation / Spiegazione configurazione systemd:
 - `Wants=network-online.target`: Aspetta che la rete sia online / Waits for network to be online
 - `After=network-online.target`: Esegue dopo l'attivazione della rete / Runs after network activation
 - `Type=oneshot`: Esegue un comando e termina / Runs one command and exits
 - `RemainAfterExit=yes`: Mantiene lo stato attivo / Keeps active state
 - `WantedBy=multi-user.target`: Si avvia in modalità multi-utente / Starts in multi-user mode
 
-### Metodo 3: Altri metodi alternativi / Other alternative methods
+### Method 3: Other alternative methods / Metodo 3: Altri metodi alternativi
 
 **Riferimento / Reference**: https://www.dexterindustries.com/howto/auto-run-python-programs-on-the-raspberry-pi/
 
 **Altri approcci possibili / Other possible approaches:**
 - Aggiunta a `/etc/rc.local` / Adding to `/etc/rc.local`
 - Cron job con `@reboot` / Cron job with `@reboot`
-- Servizi init tradizionali / Traditional init services
+- Traditional init services / Servizi init tradizionali
 
 Il metodo systemd è raccomandato perché gestisce meglio le dipendenze di rete.
 The systemd method is recommended because it better handles network dependencies.
 
 ---
 
-## Metodi alternativi per ottenere l'IP / Alternative methods to get IP
+## Alternative methods to get IP / Metodi alternativi per ottenere l'IP
 
 La versione 2 include metodi commentati / Version 2 includes commented methods:
 
-### Metodo A: IP dell'interfaccia di default / Default interface IP
+### Method A: Default interface IP / Metodo A: IP dell'interfaccia di default
 ```bash
 myip=$(ip route get 8.8.8.8 | grep -oP 'src \K\S+')
 ```
 
-### Metodo B: IP di interfaccia specifica / Specific interface IP
+### Method B: Specific interface IP / Metodo B: IP di interfaccia specifica
 ```bash
 # Ethernet
 myip=$(ip addr show eth0 | grep -oP 'inet \K[\d.]+')
@@ -180,9 +182,9 @@ myip=$(ip addr show wlan0 | grep -oP 'inet \K[\d.]+')
 
 ---
 
-## Test e debugging / Testing and debugging
+## Testing and debugging / Test e debugging
 
-### Verifica manuale / Manual verification
+### Manual verification / Verifica manuale
 ```bash
 # Test del comando IP
 hostname -I | grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' | head -1
@@ -193,7 +195,7 @@ curl -s -X POST "https://api.telegram.org/bot<TOKEN>/sendMessage" \
      -d "text=Test message"
 ```
 
-### Verifica servizio systemd / systemd service verification
+### systemd service verification / Verifica servizio systemd
 ```bash
 # Stato del servizio
 sudo systemctl status telegram_my_ip.service
@@ -204,12 +206,12 @@ sudo journalctl -u telegram_my_ip.service
 
 ---
 
-## Licenza / License
+## License / Licenza
 
-Questo progetto è rilasciato sotto licenza GNU AFFERO GENERAL PUBLIC LICENSE, V3. / This project is released under GNU AFFERO GENERAL PUBLIC LICENSE V3 license.
+This project is released under GNU AFFERO GENERAL PUBLIC LICENSE V3 license. / Questo progetto è rilasciato sotto licenza GNU AFFERO GENERAL PUBLIC LICENSE, V3.
 
 ---
 
-## Contributi / Contributing
+## Contributing / Contributi
 
-Pull request e segnalazioni sono benvenute! / Pull requests and issues are welcome!
+Pull requests and issues are welcome! / Pull request e segnalazioni sono benvenute!
